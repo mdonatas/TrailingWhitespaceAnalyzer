@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrailingWhiteSpaceAnalyzer", "TrailingWhiteSpaceAnalyzer\TrailingWhiteSpaceAnalyzer\TrailingWhiteSpaceAnalyzer.csproj", "{8BDA9E6B-9D81-4E9F-BF12-FAE1D4F66408}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrailingWhiteSpaceAnalyzer.Test", "TrailingWhiteSpaceAnalyzer\TrailingWhiteSpaceAnalyzer.Test\TrailingWhiteSpaceAnalyzer.Test.csproj", "{3E20E8A3-FF77-4542-9127-633B47FA0D11}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrailingWhiteSpaceAnalyzer.Vsix", "TrailingWhiteSpaceAnalyzer\TrailingWhiteSpaceAnalyzer.Vsix\TrailingWhiteSpaceAnalyzer.Vsix.csproj", "{20787572-3E0E-480E-A69B-E2C93BF37BF6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8BDA9E6B-9D81-4E9F-BF12-FAE1D4F66408}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BDA9E6B-9D81-4E9F-BF12-FAE1D4F66408}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BDA9E6B-9D81-4E9F-BF12-FAE1D4F66408}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BDA9E6B-9D81-4E9F-BF12-FAE1D4F66408}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E20E8A3-FF77-4542-9127-633B47FA0D11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E20E8A3-FF77-4542-9127-633B47FA0D11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E20E8A3-FF77-4542-9127-633B47FA0D11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E20E8A3-FF77-4542-9127-633B47FA0D11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20787572-3E0E-480E-A69B-E2C93BF37BF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20787572-3E0E-480E-A69B-E2C93BF37BF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20787572-3E0E-480E-A69B-E2C93BF37BF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20787572-3E0E-480E-A69B-E2C93BF37BF6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {26301FD5-F7C2-419A-8DDB-855E37AF5F39}
+	EndGlobalSection
+EndGlobal

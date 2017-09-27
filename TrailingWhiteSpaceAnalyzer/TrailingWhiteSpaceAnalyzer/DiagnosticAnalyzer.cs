@@ -30,7 +30,8 @@ namespace TrailingWhiteSpaceAnalyzer
         {
             // TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
             // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
-            context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
+            context.RegisterSyntaxTreeAction(AnalyzeSyntaxTree);
+            //context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
         }
 
         private static void AnalyzeSymbol(SymbolAnalysisContext context)
@@ -45,6 +46,28 @@ namespace TrailingWhiteSpaceAnalyzer
                 var diagnostic = Diagnostic.Create(Rule, namedTypeSymbol.Locations[0], namedTypeSymbol.Name);
 
                 context.ReportDiagnostic(diagnostic);
+            }
+        }
+
+        private static void AnalyzeSyntaxTree(SyntaxTreeAnalysisContext context)
+        {
+            SyntaxNode root = context.Tree.GetCompilationUnitRoot(context.CancellationToken);
+            IEnumerable<SyntaxTrivia> commentNodes = from node in root.DescendantTrivia() where node.IsKind(SyntaxKind.EndOfLineTrivia) select node;
+
+            foreach (var node in commentNodes)
+            {
+                if (node.Token.TrailingTrivia.Span.Length > 2)
+                {
+                    var diagnostic = Diagnostic.Create(Rule, Location.Create(node.SyntaxTree, node.Token.TrailingTrivia.Span));
+                    context.ReportDiagnostic(diagnostic);
+
+                    string commentText = node.ToString();
+
+                    if (String.IsNullOrWhiteSpace(commentText))
+                    {
+
+                    }
+                }
             }
         }
     }

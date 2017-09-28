@@ -1,12 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
 
 namespace TrailingWhiteSpaceAnalyzer
 {
@@ -20,52 +18,69 @@ namespace TrailingWhiteSpaceAnalyzer
         private static readonly LocalizableString Title = new LocalizableResourceString(nameof(Resources.AnalyzerTitle), Resources.ResourceManager, typeof(Resources));
         private static readonly LocalizableString MessageFormat = new LocalizableResourceString(nameof(Resources.AnalyzerMessageFormat), Resources.ResourceManager, typeof(Resources));
         private static readonly LocalizableString Description = new LocalizableResourceString(nameof(Resources.AnalyzerDescription), Resources.ResourceManager, typeof(Resources));
-        private const string Category = "Naming";
+        private const string Category = "Formatting";
 
-        private static DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
+        private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
 
         public override void Initialize(AnalysisContext context)
         {
-            // TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
             // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
             context.RegisterSyntaxTreeAction(AnalyzeSyntaxTree);
-            //context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
-        }
-
-        private static void AnalyzeSymbol(SymbolAnalysisContext context)
-        {
-            // TODO: Replace the following code with your own analysis, generating Diagnostic objects for any issues you find
-            var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
-
-            // Find just those named type symbols with names containing lowercase letters.
-            if (namedTypeSymbol.Name.ToCharArray().Any(char.IsLower))
-            {
-                // For all such symbols, produce a diagnostic.
-                var diagnostic = Diagnostic.Create(Rule, namedTypeSymbol.Locations[0], namedTypeSymbol.Name);
-
-                context.ReportDiagnostic(diagnostic);
-            }
         }
 
         private static void AnalyzeSyntaxTree(SyntaxTreeAnalysisContext context)
         {
             SyntaxNode root = context.Tree.GetCompilationUnitRoot(context.CancellationToken);
-            IEnumerable<SyntaxTrivia> commentNodes = from node in root.DescendantTrivia() where node.IsKind(SyntaxKind.EndOfLineTrivia) select node;
+            IEnumerable<SyntaxTrivia> endOfLineNodes = from node in root.DescendantTrivia() where node.IsKind(SyntaxKind.EndOfLineTrivia) select node;
 
-            foreach (var node in commentNodes)
+            foreach (var node in endOfLineNodes)
             {
+                var location = node.GetLocation();
+                var line = location.GetLineSpan().EndLinePosition.Line;
+
                 if (node.Token.TrailingTrivia.Span.Length > 2)
                 {
-                    var diagnostic = Diagnostic.Create(Rule, Location.Create(node.SyntaxTree, node.Token.TrailingTrivia.Span));
+                    var diagnostic = Diagnostic.Create(Rule, Location.Create(node.SyntaxTree, node.Token.TrailingTrivia.Span), line);
                     context.ReportDiagnostic(diagnostic);
+                }
 
-                    string commentText = node.ToString();
-
-                    if (String.IsNullOrWhiteSpace(commentText))
+                var leadingTrivia = node.Token.LeadingTrivia;
+                if (leadingTrivia.Count > 1)
+                {
+                    var whitespaceSpan = default(TextSpan);
+                    foreach (var trivia in leadingTrivia)
                     {
+                        if ((SyntaxKind)trivia.RawKind == SyntaxKind.WhitespaceTrivia)
+                        {
+                            if (whitespaceSpan.End == 0)
+                            {
+                                whitespaceSpan = TextSpan.FromBounds(trivia.Span.Start, trivia.Span.End);
+                            }
+                            else
+                            {
+                                whitespaceSpan = TextSpan.FromBounds(whitespaceSpan.Start, trivia.Span.End);
+                            }
+                        }
+                        else if ((SyntaxKind)trivia.RawKind == SyntaxKind.EndOfLineTrivia)
+                        {
+                            if (whitespaceSpan.End != 0)
+                            {
+                                var whitespaceLine = trivia.GetLocation().GetLineSpan().EndLinePosition.Line;
+                                if (whitespaceLine == line)
+                                {
+                                    var diagnostic = Diagnostic.Create(Rule, Location.Create(node.SyntaxTree, whitespaceSpan), whitespaceLine);
+                                    context.ReportDiagnostic(diagnostic);
+                                }
 
+                                whitespaceSpan = default(TextSpan);
+                            }
+                        }
+                        else
+                        {
+                            whitespaceSpan = default(TextSpan);
+                        }
                     }
                 }
             }

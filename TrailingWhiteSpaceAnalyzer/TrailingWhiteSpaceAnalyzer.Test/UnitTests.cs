@@ -76,7 +76,7 @@ namespace TrailingWhiteSpaceAnalyzer.Test
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {
-            return new TrailingWhiteSpaceAnalyzerAnalyzer();
+            return new TrailingWhiteSpaceAnalyzer();
         }
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace TrailingWhiteSpaceAnalyzer
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class TrailingWhiteSpaceAnalyzerAnalyzer : DiagnosticAnalyzer
+    public class TrailingWhiteSpaceAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "TrailingWhiteSpaceAnalyzer";
 
@@ -34,7 +34,6 @@ namespace TrailingWhiteSpaceAnalyzer
         {
             SyntaxNode root = context.Tree.GetCompilationUnitRoot(context.CancellationToken);
             IEnumerable<SyntaxTrivia> endOfLineNodes = from node in root.DescendantTrivia() where node.IsKind(SyntaxKind.EndOfLineTrivia) select node;
-
             foreach (var node in endOfLineNodes)
             {
                 var location = node.GetLocation();

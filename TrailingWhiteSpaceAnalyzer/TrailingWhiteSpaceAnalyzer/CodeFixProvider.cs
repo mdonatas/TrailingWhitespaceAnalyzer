@@ -1,28 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CodeActions;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Rename;
-using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.CodeFixes;
 
 namespace TrailingWhiteSpaceAnalyzer
 {
     [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(TrailingWhiteSpaceAnalyzerCodeFixProvider)), Shared]
     public class TrailingWhiteSpaceAnalyzerCodeFixProvider : CodeFixProvider
     {
-        private const string title = "Make uppercase";
+        private static readonly LocalizableString Title = new LocalizableResourceString(nameof(Resources.CodeFixTitle), Resources.ResourceManager, typeof(Resources));
+        private static readonly Task CompletedTask = Task.FromResult(false);
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(TrailingWhiteSpaceAnalyzerAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.Create(TrailingWhiteSpaceAnalyzer.DiagnosticId); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()
@@ -31,43 +26,28 @@ namespace TrailingWhiteSpaceAnalyzer
             return WellKnownFixAllProviders.BatchFixer;
         }
 
-        public sealed override async Task RegisterCodeFixesAsync(CodeFixContext context)
+        public sealed override Task RegisterCodeFixesAsync(CodeFixContext context)
         {
-            var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
-
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
             var diagnostic = context.Diagnostics.First();
-            var diagnosticSpan = diagnostic.Location.SourceSpan;
-
-            // Find the type declaration identified by the diagnostic.
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
 
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: title,
-                    createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
-                    equivalenceKey: title),
+                    title: Title.ToString(),
+                    createChangedDocument: c => RemoveTrailingWhitespaceTriviaAsync(context.Document, diagnostic, c),
+                    equivalenceKey: Title.ToString()),
                 diagnostic);
+
+            return CompletedTask;
         }
 
-        private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Document> RemoveTrailingWhitespaceTriviaAsync(Document document, Diagnostic diagnostic, CancellationToken cancellationToken)
         {
-            // Compute new uppercase name.
-            var identifierToken = typeDecl.Identifier;
-            var newName = identifierToken.Text.ToUpperInvariant();
+            SyntaxNode root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
+            SyntaxTrivia node = root.FindTrivia(diagnostic.Location.SourceSpan.Start, true);
 
-            // Get the symbol representing the type to be renamed.
-            var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
-
-            // Produce a new solution that has all references to that type renamed, including the declaration.
-            var originalSolution = document.Project.Solution;
-            var optionSet = originalSolution.Workspace.Options;
-            var newSolution = await Renamer.RenameSymbolAsync(document.Project.Solution, typeSymbol, newName, optionSet, cancellationToken).ConfigureAwait(false);
-
-            // Return the new solution with the now-uppercase type name.
-            return newSolution;
+            Document newDoc = document.WithSyntaxRoot(root.ReplaceTrivia(node, new SyntaxTrivia()));
+            return newDoc;
         }
     }
 }

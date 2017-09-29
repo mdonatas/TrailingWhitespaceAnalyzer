@@ -2,19 +2,16 @@
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using TestHelper;
-using TrailingWhiteSpaceAnalyzer;
 
 namespace TrailingWhiteSpaceAnalyzer.Test
 {
     [TestClass]
     public class UnitTest : CodeFixVerifier
     {
-
         //No diagnostics expected to show up
         [TestMethod]
-        public void TestMethod1()
+        public void NoDiagnosticsAppearOnEmptySource()
         {
             var test = @"";
 
@@ -23,15 +20,10 @@ namespace TrailingWhiteSpaceAnalyzer.Test
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
-        public void TestMethod2()
+        public void TestWhitespaceDetectedAfterACurlyBrace()
         {
             var test = @"
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
 
     namespace ConsoleApplication1
     {
@@ -42,11 +34,11 @@ namespace TrailingWhiteSpaceAnalyzer.Test
             var expected = new DiagnosticResult
             {
                 Id = "TrailingWhiteSpaceAnalyzer",
-                Message = String.Format("Type name '{0}' contains lowercase letters", "TypeName"),
+                Message = string.Format("Line '{0}' contains trailing whitespace", 7),
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 11, 15)
+                            new DiagnosticResultLocation("Test0.cs", 7, 10)
                         }
             };
 
@@ -54,16 +46,89 @@ namespace TrailingWhiteSpaceAnalyzer.Test
 
             var fixtest = @"
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
 
     namespace ConsoleApplication1
     {
-        class TYPENAME
-        {   
+        class TypeName
+        {
+        }
+    }";
+            VerifyCSharpFix(test, fixtest);
+        }
+
+        [TestMethod]
+        public void TestWhitespaceDetectedAfterAStatement()
+        {
+            var test = @"
+    using System;
+
+    namespace ConsoleApplication1
+    {
+        class TypeName
+        {
+            Console.WriteLine("""");   
+        }
+    }";
+            var expected = new DiagnosticResult
+            {
+                Id = "TrailingWhiteSpaceAnalyzer",
+                Message = string.Format("Line '{0}' contains trailing whitespace", 8),
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                        new DiagnosticResultLocation("Test0.cs", 8, 30)
+                    }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+
+            var fixtest = @"
+    using System;
+
+    namespace ConsoleApplication1
+    {
+        class TypeName
+        {
+            Console.WriteLine("""");
+        }
+    }";
+            VerifyCSharpFix(test, fixtest);
+        }
+
+        [TestMethod]
+        public void TestWhitespaceDetectedAtAnEmptyLine()
+        {
+            var test = @"
+    using System;
+
+    namespace ConsoleApplication1
+    {
+        class TypeName
+        {
+   
+        }
+    }";
+            var expected = new DiagnosticResult
+            {
+                Id = "TrailingWhiteSpaceAnalyzer",
+                Message = string.Format("Line '{0}' contains trailing whitespace", 8),
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                        new DiagnosticResultLocation("Test0.cs", 8, 30)
+                    }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+
+            var fixtest = @"
+    using System;
+
+    namespace ConsoleApplication1
+    {
+        class TypeName
+        {
+
         }
     }";
             VerifyCSharpFix(test, fixtest);
